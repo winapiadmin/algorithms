@@ -1,3 +1,4 @@
+//-funroll-loops -ffast-math -O3 -march=native -mtune=native -pipe -flto -fwhole-program -fwhole-file -fomit-frame-pointer -faggressive-loop-optimizations
 #include <iostream>
 #include <chrono>
 #include <vector>
@@ -11,7 +12,12 @@ using ll = long long;
 #define MOZ_ASSERT assert
 #define MOZ_ALWAYS_INLINE
 #if defined(_MSC_VER)
+#ifdef _M_X64
 #define MOZ_BITSCAN_WINDOWS64
+#define MOZ_BITSCAN_WINDOWS
+#elif defined(_M_IX86)
+#define MOZ_BITSCAN_WINDOWS
+#endif
 #endif
 namespace detail {
 
@@ -241,6 +247,20 @@ int main() {
     std::cout << "Benchmarking Recursive Euclidean GCD..." << std::endl;
     ll rec_count = benchmark(recursive_gcd<ll>, testCases, TIME_LIMIT);
     std::cout << "Recursive GCD calls in " << TIME_LIMIT << "s: " << rec_count << std::endl;
-
+  /*
+    The result depends on the optimization of the division operation and the compiler.
+    For example, with -O3 optimization and old CPUs, the recursive GCD function is slower than the Mozilla GCD function
+    because the division operation is slow on very old CPUs.
+    But when CPUs are optimized for faster division, the recursive GCD function is faster.
+    Benchmarking Mozilla GCD...
+    Mozilla GCD calls in 2s: 5548996
+    Benchmarking Recursive Euclidean GCD...
+    Recursive GCD calls in 2s: 10870337
+    or when unoptimized:
+    Benchmarking Mozilla GCD...
+    Mozilla GCD calls in 2s: 4555717
+    Benchmarking Recursive Euclidean GCD...
+    Recursive GCD calls in 2s: 8748157
+  */
     return 0;
 }
