@@ -1,7 +1,7 @@
 //Point-in-Polygon (not PIP in python)
 #include <iostream>
 #include <vector>
-
+#include <climits>
 using namespace std;
 
 // A structure to represent a point
