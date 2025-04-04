@@ -1,17 +1,11 @@
-// C++ program to implement
-// the above approach
+//-lgmp -funroll-loops -ffast-math -O3 -march=native -mtune=native -pipe -flto -fwhole-program -fwhole-file -fomit-frame-pointer -faggressive-loop-optimizations
 #include <bits/stdc++.h>
-
 using namespace std;
 namespace CPPBigInt
 {
-	// This code is a C++ implementation of a BigInt library using std::string
-	// to represent large integers. It includes functions for
-	// initialization, addition, multiplication, division, and exponentiation.
-	// The library supports numbers of arbitrary size, limited only by the
-	// available memory. The code is designed to be efficient
-	// and handles various edge cases, such as division by zero and
-	// negative numbers.
+	// C++ program to implement
+	// the above approach
+
 	class BigInt
 	{
 		string digits;
@@ -21,7 +15,7 @@ namespace CPPBigInt
 		BigInt(unsigned long long n = 0);
 		BigInt(string &);
 		BigInt(const char *);
-		BigInt(const BigInt &);
+		BigInt(const BigInt& );
 
 		// Helper Functions:
 		friend void divide_by_2(BigInt &a);
@@ -75,6 +69,11 @@ namespace CPPBigInt
 		// Read and Write
 		friend ostream &operator<<(ostream &, const BigInt &);
 		friend istream &operator>>(istream &, BigInt &);
+
+		// Others
+		friend BigInt NthCatalan(int n);
+		friend BigInt NthFibonacci(int n);
+		friend BigInt Factorial(int n);
 	};
 
 	BigInt::BigInt(string &s)
@@ -96,8 +95,9 @@ namespace CPPBigInt
 			nr /= 10;
 		} while (nr);
 	}
-	BigInt::BigInt(const char *s) : digits("")
+	BigInt::BigInt(const char *s)
 	{
+		digits = "";
 		for (int i = strlen(s) - 1; i >= 0; i--)
 		{
 			if (!isdigit(s[i]))
@@ -105,7 +105,10 @@ namespace CPPBigInt
 			digits.push_back(s[i] - '0');
 		}
 	}
-	BigInt::BigInt(const BigInt &a) : digits(a.digits){}
+	BigInt::BigInt(const BigInt &a)
+	{
+		digits = a.digits;
+	}
 
 	bool Null(const BigInt &a)
 	{
@@ -380,19 +383,6 @@ namespace CPPBigInt
 		return temp;
 	}
 
-	void divide_by_2(BigInt &a)
-	{
-		int add = 0;
-		for (int i = a.digits.size() - 1; i >= 0; i--)
-		{
-			int digit = (a.digits[i] >> 1) + add;
-			add = ((a.digits[i] & 1) * 5);
-			a.digits[i] = digit;
-		}
-		while (a.digits.size() > 1 && !a.digits.back())
-			a.digits.pop_back();
-	}
-
 	BigInt &operator^=(BigInt &a, const BigInt &b)
 	{
 		BigInt Exponent, Base(a);
@@ -407,23 +397,99 @@ namespace CPPBigInt
 		}
 		return a;
 	}
-	BigInt operator^(BigInt &a, const BigInt &b)
+	BigInt operator^(BigInt &a, BigInt &b)
 	{
 		BigInt temp(a);
 		temp ^= b;
 		return temp;
 	}
 
+	void divide_by_2(BigInt &a)
+	{
+		int add = 0;
+		for (int i = a.digits.size() - 1; i >= 0; i--)
+		{
+			int digit = (a.digits[i] >> 1) + add;
+			add = ((a.digits[i] & 1) * 5);
+			a.digits[i] = digit;
+		}
+		while (a.digits.size() > 1 && !a.digits.back())
+			a.digits.pop_back();
+	}
+
+	BigInt sqrt(BigInt &a)
+	{
+		BigInt left(1), right(a), v(1), mid, prod;
+		divide_by_2(right);
+		while (left <= right)
+		{
+			mid += left;
+			mid += right;
+			divide_by_2(mid);
+			prod = (mid * mid);
+			if (prod <= a)
+			{
+				v = mid;
+				++mid;
+				left = mid;
+			}
+			else
+			{
+				--mid;
+				right = mid;
+			}
+			mid = BigInt();
+		}
+		return v;
+	}
+
+	BigInt NthCatalan(int n)
+	{
+		BigInt a(1), b;
+		for (int i = 2; i <= n; i++)
+			a *= i;
+		b = a;
+		for (int i = n + 1; i <= 2 * n; i++)
+			b *= i;
+		a *= a;
+		a *= (n + 1);
+		b /= a;
+		return b;
+	}
+
+	BigInt NthFibonacci(int n)
+	{
+		BigInt a(1), b(1), c;
+		if (!n)
+			return c;
+		n--;
+		while (n--)
+		{
+			c = a + b;
+			b = a;
+			a = c;
+		}
+		return b;
+	}
+
+	BigInt Factorial(int n)
+	{
+		BigInt f(1);
+		for (int i = 2; i <= n; i++)
+			f *= i;
+		return f;
+	}
+
 	istream &operator>>(istream &in, BigInt &a)
 	{
 		string s;
 		in >> s;
-		a.digits = "";
-		for (int i = s.size() - 1; i >= 0; i--)
+		int n = s.size();
+		for (int i = n - 1; i >= 0; i--)
 		{
 			if (!isdigit(s[i]))
 				throw("INVALID NUMBER");
-			a.digits.push_back(s[i] - '0');
+			a.digits[n - i - 1] = s[i];
 		}
 		return in;
 	}
@@ -434,30 +500,31 @@ namespace CPPBigInt
 			out << (short)a.digits[i];
 		return out;
 	}
+
 }
 namespace CBigInt
 {
 
-	// This code is a C implementation of a BigInt library using u64
-	// to represent large integers. It includes functions for
-	// initialization, addition, multiplication, division, and conversion
-	// between bases. The library supports numbers up to 8192 bits
-	// (128 limbs of 64 bits each). The code is designed to be efficient
-	// and handles various edge cases, such as division by zero and
-	// negative numbers. The library also includes functions for
-	// converting numbers to binary strings and printing them in
-	// different bases. The implementation is modular and can be
-	// easily extended to include more operations or features.
-	// winapiadmin and AI (contributed by AI)
-	#include <stdio.h>
-	#include <stdint.h>
-	#include <stdlib.h>
-	#include <string.h>
-	#include <limits.h>
+// This code is a C implementation of a BigInt library using u64
+// to represent large integers. It includes functions for
+// initialization, addition, multiplication, division, and conversion
+// between bases. The library supports numbers up to 8192 bits
+// (128 limbs of 64 bits each). The code is designed to be efficient
+// and handles various edge cases, such as division by zero and
+// negative numbers. The library also includes functions for
+// converting numbers to binary strings and printing them in
+// different bases. The implementation is modular and can be
+// easily extended to include more operations or features.
+// winapiadmin and AI (contributed by AI)
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <limits.h>
 
-	#define MAX_LIMBS 128			   // Supports large numbers (~8192-bit)
-	#define BASE 10					   // Base-10^9 (for easy printing)
-	#define MAX_DIGITS 2500            // Maximum number of decimal digits (logically math.log10(2**8192)=2466.03 rounded up to 2500)
+#define MAX_LIMBS 128	// Supports large numbers (~8192-bit)
+#define BASE 10			// Base-10^9 (for easy printing)
+#define MAX_DIGITS 2500 // Maximum number of decimal digits (logically math.log10(2**8192)=2466.03 rounded up to 2500)
 
 	typedef unsigned long long u64;
 	const u64 MAX_BASE = UINT64_MAX;
@@ -471,10 +538,10 @@ namespace CBigInt
 	} BigInt;
 
 	// Initialize a BigInt with a single value
-	void bigint_init(BigInt *num, u64 value)
+	void bigint_init(BigInt *num, long long value)
 	{
 		memset(num, 0, sizeof(BigInt));
-		num->limbs[0] = value;
+		num->limbs[0] = abs(value);
 		num->size = (value > 0) ? 1 : 0;
 		num->sign = (value > 0) ? 1 : 0;
 	}
@@ -486,50 +553,64 @@ namespace CBigInt
 	int bigint_compare(const BigInt *a, const BigInt *b);
 
 	// Convert a number (as string) from base `a` to base `b`
-	char* convertBase(const char *num, u64 baseA, u64 baseB) {
-		if (baseA < 2 || baseB < 2 || baseA > MAX_BASE || baseB > MAX_BASE) {
+	char *convertBase(const char *num, u64 baseA, u64 baseB)
+	{
+		if (baseA < 2 || baseB < 2 || baseA > MAX_BASE || baseB > MAX_BASE)
+		{
 			fprintf(stderr, "Error: Bases must be in range [2, UINT64_MAX]\n");
 			exit(EXIT_FAILURE);
 		}
-		
+
 		// Create a modifiable copy of the input number.
 		char *input = strdup(num);
-		if (!input) {
+		if (!input)
+		{
 			fprintf(stderr, "Error: Memory allocation failed\n");
 			exit(EXIT_FAILURE);
 		}
-		
+
 		// Allocate a buffer for the result using the defined maximum digits.
-		char *result = (char*)malloc(MAX_DIGITS + 1);
-		if (!result) {
+		char *result = (char *)malloc(MAX_DIGITS + 1);
+		if (!result)
+		{
 			fprintf(stderr, "Error: Memory allocation failed\n");
 			free(input);
 			exit(EXIT_FAILURE);
 		}
 		int resIndex = 0;
-		
+
 		// Repeat division until the number becomes "0".
-		while (strcmp(input, "0") != 0) {
+		while (strcmp(input, "0") != 0)
+		{
 			int carry = 0;
 			size_t len = strlen(input);
-			char *quotient = (char*)malloc(len + 1);
-			if (!quotient) {
+			char *quotient = (char *)malloc(len + 1);
+			if (!quotient)
+			{
 				fprintf(stderr, "Error: Memory allocation failed\n");
 				free(input);
 				free(result);
 				exit(EXIT_FAILURE);
 			}
 			int qIndex = 0;
-			for (size_t i = 0; i < len; i++) {
+			for (size_t i = 0; i < len; i++)
+			{
 				int digit;
 				char c = input[i];
-				if ('0' <= c && c <= '9') {
+				if ('0' <= c && c <= '9')
+				{
 					digit = c - '0';
-				} else if ('A' <= c && c <= 'Z') {
+				}
+				else if ('A' <= c && c <= 'Z')
+				{
 					digit = c - 'A' + 10;
-				} else if ('a' <= c && c <= 'z') {
+				}
+				else if ('a' <= c && c <= 'z')
+				{
 					digit = c - 'a' + 10;
-				} else {
+				}
+				else
+				{
 					fprintf(stderr, "Error: Invalid digit in input number\n");
 					free(input);
 					free(result);
@@ -540,25 +621,28 @@ namespace CBigInt
 				int qdigit = value / baseB;
 				carry = value % baseB;
 				// Avoid leading zeros.
-				if (qIndex > 0 || qdigit != 0) {
+				if (qIndex > 0 || qdigit != 0)
+				{
 					quotient[qIndex++] = DIGITS[qdigit];
 				}
 			}
 			quotient[qIndex] = '\0';
-			
+
 			// If quotient is empty, set it to "0" to avoid infinite loop.
-			if(qIndex == 0) {
+			if (qIndex == 0)
+			{
 				strcpy(quotient, "0");
 			}
-			
+
 			// Store the remainder digit.
 			result[resIndex++] = DIGITS[carry];
-			
+
 			// Update the input number with the new quotient.
 			free(input);
 			input = strdup(quotient);
 			free(quotient);
-			if (!input) {
+			if (!input)
+			{
 				fprintf(stderr, "Error: Memory allocation failed\n");
 				free(result);
 				exit(EXIT_FAILURE);
@@ -567,7 +651,8 @@ namespace CBigInt
 		free(input);
 		result[resIndex] = '\0';
 		// Reverse the result string in place.
-		for (int i = 0; i < resIndex / 2; i++) {
+		for (int i = 0; i < resIndex / 2; i++)
+		{
 			char temp = result[i];
 			result[i] = result[resIndex - 1 - i];
 			result[resIndex - 1 - i] = temp;
@@ -576,18 +661,22 @@ namespace CBigInt
 	}
 
 	// Convert BigInt to a binary string (concatenate binary of all limbs)
-	char* bigint_to_binary_string(const BigInt *num) {
+	char *bigint_to_binary_string(const BigInt *num)
+	{
 		size_t total_bits = num->size * 64;
-		char *binary_str = (char*)malloc(total_bits + 1);
-		if (!binary_str) {
+		char *binary_str = (char *)malloc(total_bits + 1);
+		if (!binary_str)
+		{
 			fprintf(stderr, "Error: Memory allocation failed\n");
 			exit(EXIT_FAILURE);
 		}
-		
+
 		// Construct the binary string from the limbs
 		size_t pos = 0;
-		for (int i = num->size - 1; i >= 0; i--) {
-			for (int bit = 63; bit >= 0; bit--) {
+		for (int i = num->size - 1; i >= 0; i--)
+		{
+			for (int bit = 63; bit >= 0; bit--)
+			{
 				binary_str[pos++] = ((num->limbs[i] >> bit) & 1) ? '1' : '0';
 			}
 		}
@@ -597,7 +686,8 @@ namespace CBigInt
 	}
 
 	// Convert a BigInt (in binary) to base 10 string
-	char* bigint_to_base10(const BigInt *num) {
+	char *bigint_to_base10(const BigInt *num)
+	{
 		char *binary_str = bigint_to_binary_string(num);
 
 		// Now convert the binary string to base-10 using convertBase
@@ -606,7 +696,6 @@ namespace CBigInt
 		free(binary_str); // Clean up binary string
 		return base10_str;
 	}
-
 
 	// Function to convert a `BigInt` to a base-10 string using `binary_to_decimal`
 	char *to_string(const BigInt *num)
@@ -628,6 +717,12 @@ namespace CBigInt
 	// Helper function to compare two BigInts: returns -1 if a < b, 0 if equal, 1 if a > b.
 	int bigint_compare(const BigInt *a, const BigInt *b)
 	{
+		if (a->sign < 0 && b->sign > 0)
+			return -1;
+		if (a->sign > 0 && b->sign < 0)
+			return 1;
+		if (a->sign == 0 && b->sign == 0)
+			return 0;
 		if (a->size != b->size)
 			return (a->size < b->size) ? -1 : 1;
 		for (int i = a->size - 1; i >= 0; i--)
@@ -795,7 +890,7 @@ namespace CBigInt
 		memset(result, 0, sizeof(BigInt));
 		result->size = a->size + b->size;
 		result->sign = (a->sign == b->sign) ? 1 : -1;
-	
+
 		// Handle multiplication by zero
 		if (a->size == 0 || b->size == 0)
 		{
@@ -804,7 +899,7 @@ namespace CBigInt
 			result->limbs[0] = 0;
 			return;
 		}
-	
+
 		// Multiply each limb and handle carry
 		for (int i = 0; i < a->size; i++)
 		{
@@ -817,25 +912,25 @@ namespace CBigInt
 				result->limbs[i + j] = (u64)prod;
 				carry = (prod >> 64);
 			}
-	
+
 			// Store any leftover carry in the next limb
 			if (carry)
 				result->limbs[i + b->size] = (u64)carry;
 		}
-	
+
 		// Trim leading zeroes
 		while (result->size > 1 && result->limbs[result->size - 1] == 0)
 		{
 			result->size--;
 		}
-	
+
 		// If result is zero, force size to 1 and reset sign
 		if (result->size == 1 && result->limbs[0] == 0)
 		{
 			result->sign = 0;
 		}
 	}
-	
+
 	void bigint_divide(const BigInt *a, const BigInt *b, BigInt *quotient, BigInt *remainder)
 	{
 		// Handle division by zero.
@@ -900,12 +995,16 @@ namespace CBigInt
 	// Supports optional leading '-' sign.
 	void bigint_from_string(BigInt *num, const char *str)
 	{
+		while (str[0] == ' ')
+			str++; // Skip leading spaces
 		int sign = 1;
 		if (str[0] == '-')
 		{
 			sign = -1;
 			str++;
 		}
+		while (str[0] == ' ')
+			str++; // Skip leading spaces
 
 		bigint_init(num, 0);
 		BigInt base_big;
@@ -944,42 +1043,146 @@ std::string to_string(const CPPBigInt::BigInt &num)
 	oss << num;
 	return oss.str();
 }
-bool test(std::string s1, std::string s2)
-{
-	// ---------- Using CPPBigInt ----------
-	CPPBigInt::BigInt aCPP(s1), bCPP(s2);
-	CPPBigInt::BigInt sumCPP = aCPP + bCPP;
-	CPPBigInt::BigInt prodCPP = aCPP * bCPP;
+#include <gmp.h>
+// Subfunction to test CBigInt
+bool testC(std::string s1, std::string s2) {
+    // ---------- Using CBigInt ----------
+    CBigInt::BigInt aC, bC, sumC, prodC;
+    CBigInt::bigint_from_string(&aC, s1.c_str());
+    CBigInt::bigint_from_string(&bC, s2.c_str());
+    CBigInt::bigint_init(&sumC, 0);
+    CBigInt::bigint_init(&prodC, 0);
+    
+    // Calculate addition and multiplication
+    CBigInt::bigint_add(&aC, &bC, &sumC);
+    CBigInt::bigint_multiply(&aC, &bC, &prodC);
 
-	// ---------- Using CBigInt ----------
-	// For CBigInt we use the 64-bit conversion since our numbers fit in u64.
+    // Convert CBigInt to GMP (mpz_t)
+    mpz_t sumC_GMP, prodC_GMP;
+    mpz_init(sumC_GMP);
+    mpz_init(prodC_GMP);
 
-	CBigInt::BigInt aC, bC, sumC, prodC;
-	CBigInt::bigint_from_string(&aC, s1.c_str());
-	CBigInt::bigint_from_string(&bC, s2.c_str());
-	CBigInt::bigint_init(&sumC, 0);
-	CBigInt::bigint_init(&prodC, 0);
-	// Calculate addition
-	CBigInt::bigint_add(&aC, &bC, &sumC);
+    // Convert sumC to GMP
+    char* sumC_str = CBigInt::to_string(&sumC);
+    mpz_set_str(sumC_GMP, sumC_str, 10);
+    free(sumC_str);
 
-	// Reinitialize operands for multiplication (since they are modified in operations)
-	CBigInt::bigint_from_string(&aC, s1.c_str());
-	CBigInt::bigint_from_string(&bC, s2.c_str());
-	CBigInt::bigint_multiply(&aC, &bC, &prodC);
-	CBigInt::bigint_print(&prodC);
-	putchar('\n');
-	CBigInt::bigint_print(&sumC);
-	{
-		char* sumC_str = CBigInt::to_string(&sumC);
-		char* prodC_str = CBigInt::to_string(&prodC);
-		std::string sumC_cpp(sumC_str);
-		std::string prodC_cpp(prodC_str);
-		free(sumC_str);
-		free(prodC_str);
-		return to_string(sumCPP) == sumC_cpp &&
-			   to_string(prodCPP) == prodC_cpp;
-	}
+    // Convert prodC to GMP
+    char* prodC_str = CBigInt::to_string(&prodC);
+    mpz_set_str(prodC_GMP, prodC_str, 10);
+    free(prodC_str);
+
+    // ---------- Using GMP for Validation ----------
+    mpz_t aGMP, bGMP, sumGMP, prodGMP;
+    mpz_init(aGMP);
+    mpz_init(bGMP);
+    mpz_init(sumGMP);
+    mpz_init(prodGMP);
+
+    // Set GMP variables from input strings
+    if (mpz_set_str(aGMP, s1.c_str(), 10) != 0 || mpz_set_str(bGMP, s2.c_str(), 10) != 0) {
+        std::cerr << "Error: Invalid number format for GMP." << std::endl;
+        mpz_clear(aGMP);
+        mpz_clear(bGMP);
+        mpz_clear(sumGMP);
+        mpz_clear(prodGMP);
+        return false;
+    }
+
+    // Perform GMP addition and multiplication
+    mpz_add(sumGMP, aGMP, bGMP);
+    mpz_mul(prodGMP, aGMP, bGMP);
+
+    // ---------- Validation ----------
+    bool valid = true;
+    // Compare GMP sum with CBigInt sum (using mpz_cmp)
+    if (mpz_cmp(sumGMP, sumC_GMP) != 0) {
+        std::cerr << "Validation failed: GMP sum does not match CBigInt sum!" << std::endl;
+        valid = false;
+    }
+    // Compare GMP product with CBigInt product (using mpz_cmp)
+    if (mpz_cmp(prodGMP, prodC_GMP) != 0) {
+        std::cerr << "Validation failed: GMP product does not match CBigInt product!" << std::endl;
+        valid = false;
+    }
+
+    // Clean up GMP memory
+    mpz_clear(aGMP);
+    mpz_clear(bGMP);
+    mpz_clear(sumGMP);
+    mpz_clear(prodGMP);
+    mpz_clear(sumC_GMP);
+    mpz_clear(prodC_GMP);
+
+    return valid;
 }
+
+// Subfunction to test CPPBigInt::BigInt
+bool testCPP(std::string s1, std::string s2) {
+    // ---------- Using CPPBigInt ----------
+    CPPBigInt::BigInt aCPP(s1), bCPP(s2);
+    CPPBigInt::BigInt sumCPP = aCPP + bCPP;
+    CPPBigInt::BigInt prodCPP = aCPP * bCPP;
+
+    mpz_t sumCPP_GMP, prodCPP_GMP;
+    mpz_init(sumCPP_GMP);
+    mpz_init(prodCPP_GMP);
+
+    // Convert sumCPP to GMP
+    char* sumCPP_str = strdup(to_string(sumCPP).c_str());
+    mpz_set_str(sumCPP_GMP, sumCPP_str, 10);
+    free(sumCPP_str);
+
+    // Convert prodCPP to GMP
+    char* prodCPP_str = strdup(to_string(prodCPP).c_str());
+    mpz_set_str(prodCPP_GMP, prodCPP_str, 10);
+    free(prodCPP_str);
+
+    // ---------- Using GMP for Validation ----------
+    mpz_t aGMP, bGMP, sumGMP, prodGMP;
+    mpz_init(aGMP);
+    mpz_init(bGMP);
+    mpz_init(sumGMP);
+    mpz_init(prodGMP);
+
+    // Set GMP variables from input strings
+    if (mpz_set_str(aGMP, s1.c_str(), 10) != 0 || mpz_set_str(bGMP, s2.c_str(), 10) != 0) {
+        std::cerr << "Error: Invalid number format for GMP." << std::endl;
+        mpz_clear(aGMP);
+        mpz_clear(bGMP);
+        mpz_clear(sumGMP);
+        mpz_clear(prodGMP);
+        return false;
+    }
+
+    // Perform GMP addition and multiplication
+    mpz_add(sumGMP, aGMP, bGMP);
+    mpz_mul(prodGMP, aGMP, bGMP);
+
+    // ---------- Validation ----------
+    bool valid = true;
+    // Compare GMP sum with CPPBigInt sum (using mpz_cmp)
+    if (mpz_cmp(sumGMP, sumCPP_GMP) != 0) {
+        std::cerr << "Validation failed: GMP sum does not match CPPBigInt::BigInt sum!" << std::endl;
+        valid = false;
+    }
+    // Compare GMP product with CPPBigInt product (using mpz_cmp)
+    if (mpz_cmp(prodGMP, prodCPP_GMP) != 0) {
+        std::cerr << "Validation failed: GMP product does not match CPPBigInt::BigInt product!" << std::endl;
+        valid = false;
+    }
+
+    // Clean up GMP memory
+    mpz_clear(aGMP);
+    mpz_clear(bGMP);
+    mpz_clear(sumGMP);
+    mpz_clear(prodGMP);
+    mpz_clear(sumCPP_GMP);
+    mpz_clear(prodCPP_GMP);
+
+    return valid;
+}
+
 #include <iostream>
 #include <string>
 #include <random>
@@ -992,14 +1195,14 @@ std::string generateRandomBigNumber(size_t length)
 	std::random_device rd;
 	std::mt19937 gen(rd());					   // Random number generator based on random_device
 	std::uniform_int_distribution<> dis(0, 9); // Random digits 0-9
-/*
-	bool isNegative = 0; // Randomly decide if the number is negative
-
-	if (isNegative)
-	{
-		number += '-';
-	}
-*/
+											   /*
+												   bool isNegative = 0; // Randomly decide if the number is negative
+										   
+												   if (isNegative)
+												   {
+													   number += '-';
+												   }
+											   */
 	// Generate the big number
 	for (size_t i = 0; i < length; ++i)
 	{
@@ -1011,21 +1214,40 @@ std::string generateRandomBigNumber(size_t length)
 
 int main()
 {
-	// Generate two big numbers (with 50 digits)
-	std::string num1 = generateRandomBigNumber(50);
-	std::string num2 = generateRandomBigNumber(50);
-
-	// Call the test function with the big numbers
-	if (!test(num1, num2))
+	bool C=true, CPP=true;
+	for (int _=0; _<1000000; _++)
 	{
-		std::cout << "Test failed for numbers: " << num1 << " and " << num2 << std::endl;
-	}
-	else
-	{
-		std::cout << "Test passed for numbers: " << num1 << " and " << num2 << std::endl;
-	}
+		// Generate two big numbers (with 50 digits)
+		std::string num1 = generateRandomBigNumber(50);
+		std::string num2 = generateRandomBigNumber(50);
 
+		// Call the test function with the big numbers
+		if (!testC(num1, num2)){
+			std::cout << "Test failed for numbers: " << num1 << " and " << num2 << " with engine CBigInt\n";
+			C=false;
+		}
+		// Call the test function with the big numbers
+		if (!testCPP(num1, num2)){
+			std::cout << "Test failed for numbers: " << num1 << " and " << num2 << " with engine CPPBigInt::BigInt\n";
+			CPP=false;
+		}
+	}
+	if (C){
+		std::cout << "All tests passed for engine CBigInt!" << '\n';
+	}
+	else{
+		std::cout << "Some tests failed for engine CBigInt!" << '\n';
+		return 1;
+	}
+	if (CPP){
+		std::cout << "All tests passed for engine CPPBigInt::BigInt!" << '\n';
+		return 0;
+	}
+	else{
+		std::cout << "Some tests failed for engine CPPBigInt::BigInt!" << '\n';
+		return 1;
+	}
 	return 0;
 }
-//Well, it doesn't work well, but a fun way of exploring performance limits.
-//or not:)
+// Well, it doesn't work well, but a fun way of exploring performance limits.
+// or not:)
